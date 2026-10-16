@@ -1,0 +1,5 @@
+# Dataset
+https://www.kaggle.com/datasets/isaacritharson/mimic-iv-cleaned-medical-transcripts?resource=download
+
+# HIPPA (Health Insurance Portability and Accountability Act)
+https://compliancy-group.com/what-is-hipaa-compliance/

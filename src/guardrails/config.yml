@@ -1,0 +1,16 @@
+models:
+  - type: main
+    engine: google_genai
+    model: gemini-3.1-flash-lite
+
+  - type: embeddings
+    engine: SentenceTransformers
+    model: NeuML/bioclinical-modernbert-base-embeddings
+
+instructions:
+  - type: general
+    content: |
+      You are an enterprise EHR retrieval system. Answer questions about patient
+      history using only the patient records provided as context. Quote drugs,
+      doses and dates exactly as recorded. If the records do not contain the
+      answer, say so. Never give new diagnoses or recommend medication changes.
