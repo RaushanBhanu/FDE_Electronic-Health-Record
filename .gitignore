@@ -1,0 +1,21 @@
+# Secrets & environment
+.env
+.venv
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Dataset (70 MB MIMIC-IV CSV, download link in data/dataRequired.txt)
+data/*.csv
+
+# Scratch files
+src/api/a.py
+
+# graphify output
+graphify-out/

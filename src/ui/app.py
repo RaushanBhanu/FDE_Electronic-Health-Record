@@ -46,7 +46,10 @@ if prompt := st.chat_input(f"Ask about patient {patient_id}'s history..."):
     with st.spinner("Analyzing securely..."):
         try:
             response = requests.post(API_CHAT_URL, json=payload)
-            response.raise_for_status()
+            if not response.ok:
+                raise requests.exceptions.HTTPError(
+                    f"{response.status_code}: {response.json().get('detail', response.text)}"
+                )
             bot_reply = response.json().get("llm_response")
             
             # Enforce Output Disclaimer
