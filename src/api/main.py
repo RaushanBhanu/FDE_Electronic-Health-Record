@@ -1,5 +1,4 @@
 # uvicorn src.api.main:app --reload
-import asyncio
 import os
 from typing import List
 
@@ -32,15 +31,19 @@ async def lifespan(app: FastAPI):
     middleware["rails"] = LLMRails(config)
 
     print("⏳ Loading local BioClinical ModernBERT embedding model...")
-
     middleware["embedder"] = SentenceTransformer(
         "NeuML/bioclinical-modernbert-base-embeddings"
     )
 
+    print("⏳ Connecting to database...")
+    middleware["db_engine"] = get_db_engine()
+
     print("✅ System Ready on port 8000.")
 
     yield  # app serves requests here
-    middleware.clear()  # optional shutdown cleanup
+
+    middleware["db_engine"].dispose()  # close pooled connections
+    middleware.clear()
 
 
 app = FastAPI(title="Zero-Trust Clinical RAG API", lifespan=lifespan)
@@ -64,7 +67,8 @@ def get_db_engine():
             "postgresql+psycopg://postgres:password@localhost:5432/clinical_db",
         )
 
-    return create_engine(DB_URL)
+    return create_engine(DB_URL, pool_pre_ping=True, pool_recycle=1800)
+
 
 
 # --- MODELS ---
@@ -117,10 +121,9 @@ async def process_clinical_query(query: ClinicalQuery):
 # --- ENDPOINT 2: PRODUCTION CHAT (NATIVE PGVECTOR DB) ---
 @app.post("/api/v1/chat")
 async def process_chat(request: ChatRequest):
-    print("Request:", request)
     try:
+        engine = middleware["db_engine"]
         latest_question = request.messages[-1].content
-        engine = get_db_engine()
 
         # 1. Embed the user's question into a 768-dim vector
         embedder = middleware["embedder"]
@@ -128,6 +131,8 @@ async def process_chat(request: ChatRequest):
 
         # 2. Native pgvector similarity search on patient_encounters table
         with engine.connect() as conn:
+            conn.execute(text("SET LOCAL hnsw.iterative_scan = relaxed_order;"))
+
             query = text("""
                 SELECT drug, dose_val_rx, dose_unit_rx, route, eventtype, test_name, comments, description 
                 FROM patient_encounters 

@@ -30,6 +30,12 @@ def ingest_data():
             
     print(f"Loading clinical data from:\n  {csv_path}")
     df = pd.read_csv(csv_path)
+
+    # Drop rows that are exact duplicates across every column
+    before = len(df)
+    df = df.drop_duplicates()
+    print(f"Dropped {before - len(df)} duplicate records.")
+
     # Replace NaN/NaT with None so SQLAlchemy inserts SQL NULLs instead of breaking
     df = df.where(pd.notnull(df), None)
     
